@@ -40,7 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.SpringApplication;
-import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -72,7 +72,7 @@ public class GraphiteConnectTest {
 
         final SpringApplication app = new SpringApplication(TestConfiguration.class);
         app.setDefaultProperties(props);
-        final ApplicationContext context = app.run();
+        final ConfigurableApplicationContext context = app.run();
         final BeanFactory factory = context.getAutowireCapableBeanFactory();
         final Counter detectedConnectionFailures = findConnectionFailureCounter(factory);
         final MetricRegistry metricRegistry = factory.getBean(MetricRegistry.class);
@@ -88,6 +88,7 @@ public class GraphiteConnectTest {
         SpringApplication.exit(context, () -> 0);
         server.stopClean();
         Assert.assertEquals(0, detectedConnectionFailures.getCount());
+        context.close();
     }
 
     @Test
@@ -107,7 +108,7 @@ public class GraphiteConnectTest {
 
         final SpringApplication app = new SpringApplication(TestConfiguration.class);
         app.setDefaultProperties(props);
-        final ApplicationContext context = app.run();
+        final ConfigurableApplicationContext context = app.run();
         final BeanFactory factory = context.getAutowireCapableBeanFactory();
         final Counter detectedConnectionFailures = findConnectionFailureCounter(factory);
         final Counter connectionCloses = findConnectionCloseCounter(factory);
@@ -143,6 +144,7 @@ public class GraphiteConnectTest {
         Assert.assertTrue(server2.contains("foo.bar.baz"));
         SpringApplication.exit(context, () -> 0);
         server2.stopClean();
+        context.close();
     }
 
     @Test
@@ -162,7 +164,7 @@ public class GraphiteConnectTest {
 
         final SpringApplication app = new SpringApplication(TestConfiguration.class);
         app.setDefaultProperties(props);
-        final ApplicationContext context = app.run();
+        final ConfigurableApplicationContext context = app.run();
         final BeanFactory factory = context.getAutowireCapableBeanFactory();
         final GraphiteSender sender = factory.getBean(GraphiteSender.class);
 
@@ -198,6 +200,8 @@ public class GraphiteConnectTest {
         SpringApplication.exit(context, () -> 0);
         server2.stopClean();
         Assert.assertNotEquals(0, connectionCloses.getCount());
+        context.close();
+        sender.close();
     }
 
     private static Counter findConnectionFailureCounter(final BeanFactory factory) {
@@ -244,10 +248,6 @@ public class GraphiteConnectTest {
             sock.close();
         }
 
-        private void stopDirty() throws InterruptedException {
-            killClientHandler();
-        }
-
         private long getBytesRead() {
             return bytesRead.longValue();
         }
@@ -267,20 +267,19 @@ public class GraphiteConnectTest {
                     if (n == -1) {
                         LOG.info("client disconnected");
                         break;
-                    } else {
-                        bytesRead.add(n);
-                        final String asString = new String(buf, 0, n, StandardCharsets.US_ASCII);
-                        sb.append(asString);
-                        //LOG.info("read {} bytes\n{}", n, asString);
                     }
+                    bytesRead.add(n);
+                    final String asString = new String(buf, 0, n, StandardCharsets.US_ASCII);
+                    sb.append(asString);
                     Thread.sleep(Duration.ofMillis(100).toMillis());
                 }
                 client.shutdownOutput();
                 client.shutdownInput();
                 client.close();
+                input.close();
             } catch (final IOException e) {
                 throw new RuntimeException(e);
-            } catch (final InterruptedException e) {
+            } catch (@SuppressWarnings("unused") final InterruptedException e) {
                 LOG.info("interrupted, bailing");
                 Thread.currentThread().interrupt();
             } finally {

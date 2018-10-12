@@ -34,7 +34,6 @@ import com.google.common.primitives.Ints;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("resource")
 public class GraphiteSenderWrapper implements GraphiteSender, Closeable, MetricSet {
     private static final Logger LOG = LoggerFactory.getLogger(GraphiteSenderWrapper.class);
 

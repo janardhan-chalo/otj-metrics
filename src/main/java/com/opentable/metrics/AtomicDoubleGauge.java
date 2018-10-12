@@ -18,6 +18,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.codahale.metrics.Gauge;
 
 public class AtomicDoubleGauge extends AtomicReference<Double> implements Gauge<Double> {
+
+    private static final long serialVersionUID = 8682874660670154270L;
+
     @Override
     public Double getValue() {
         return get();

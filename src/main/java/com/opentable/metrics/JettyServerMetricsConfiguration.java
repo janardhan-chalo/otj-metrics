@@ -27,7 +27,6 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -43,9 +42,9 @@ public class JettyServerMetricsConfiguration {
     private static final String PREFIX = "http-server";
 
     @Bean
-    public Provider<QueuedThreadPool> getIQTPProvider(final MetricRegistry metricRegistry, @Value("${ot.httpserver.queue-size:32768}") int qSize) {
+    public Provider<QueuedThreadPool> getIQTPProvider(final MetricRegistry metricRegistry) {
         return () -> {
-            final InstrumentedQueuedThreadPool pool = new OTQueuedThreadPool(metricRegistry, qSize);
+            final InstrumentedQueuedThreadPool pool = new OTQueuedThreadPool(metricRegistry);
             pool.setName("default-pool");
             return pool;
         };
@@ -68,7 +67,7 @@ public class JettyServerMetricsConfiguration {
     }
 
     static class OTQueuedThreadPool extends InstrumentedQueuedThreadPool {
-        OTQueuedThreadPool(MetricRegistry metricRegistry, int qSize) {
+        OTQueuedThreadPool(MetricRegistry metricRegistry) {
             super(metricRegistry,
                 32, 32, // Default number of threads, overridden in otj-server EmbeddedJetty
                 30000,  // Idle timeout, irrelevant since max == min
