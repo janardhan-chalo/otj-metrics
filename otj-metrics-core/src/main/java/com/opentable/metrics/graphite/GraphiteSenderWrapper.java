@@ -119,6 +119,7 @@ public class GraphiteSenderWrapper implements GraphiteSender, Closeable, MetricS
     private synchronized Graphite maybeRecycle() throws IOException {
         if (needsReconnectPeriodic()) { //NOPMD
             // Spin up new one
+            @SuppressWarnings("PMD.CloseResource")
             Graphite newGraphite = new Graphite(host, port);
             //newGraphite.connect();
 

@@ -86,6 +86,10 @@ public class GraphiteConfiguration {
         return reportingPeriod;
     }
 
+    public void setShowFlavorInPrefix(final boolean showFlavorInPrefix) {
+        this.showFlavorInPrefix = showFlavorInPrefix;
+    }
+
     @Bean
     public ScheduledReporter graphiteReporter(Optional<GraphiteSender> sender,
                                               MetricRegistry metricRegistry, ServiceInfo serviceInfo,
@@ -133,6 +137,7 @@ public class GraphiteConfiguration {
             LOG.info("no graphite host; skipping sender initialization");
             return null;
         }
+        @SuppressWarnings("PMD.CloseResource")
         final Graphite graphite = new Graphite(host, port);
         GraphiteSenderWrapper result = new GraphiteSenderWrapper(host, port, graphite);
         registeredMetrics = MetricSets.combineAndPrefix(PREFIX, result);

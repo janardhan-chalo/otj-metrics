@@ -108,12 +108,10 @@ public class MetricSetBuilderTest {
         b.histogram("foo", testReservoir);
 
         final Map<String, Metric> builtMetrics = b.build().getMetrics();
-        assertThat(builtMetrics)
-            .extracting("test.foo")
-            .first()
+        assertThat(builtMetrics.get("test.foo"))
             .isInstanceOf(Histogram.class)
-            .extracting("reservoir")
-            .containsExactly(testReservoir)
+            .extracting("reservoir").isEqualTo(testReservoir)
+
         ;
     }
 
